@@ -11,10 +11,11 @@ import java.util.List;
 
 @WebServlet("/show_all")
 public class ShowAllStudentsServlet extends HttpServlet {
+
     private StudentDAO studentDAO;
 
     @Override
-    public void init() {
+    public void init() throws ServletException {
         studentDAO = new StudentDAO();
     }
 
@@ -22,8 +23,20 @@ public class ShowAllStudentsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        List<Student> students = studentDAO.selectAllStudents();
-        request.setAttribute("students", students);
+        try {
+            // Fetch all students
+            List<Student> students = studentDAO.selectAllStudents();
+
+            // Add to request
+            request.setAttribute("students", students);
+
+        } catch (Exception e) {
+            // Handle unexpected errors gracefully
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Unable to fetch students.");
+        }
+
+        // Forward to JSP
         request.getRequestDispatcher("show.jsp").forward(request, response);
     }
 }

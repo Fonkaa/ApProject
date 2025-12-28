@@ -11,10 +11,11 @@ import java.sql.SQLException;
 
 @WebServlet("/register")
 public class RegisterStudentServlet extends HttpServlet {
+
     private StudentDAO studentDAO;
 
     @Override
-    public void init() {
+    public void init() throws ServletException {
         studentDAO = new StudentDAO();
     }
 
@@ -22,42 +23,48 @@ public class RegisterStudentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Read parameters
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String yearStr = request.getParameter("year");
 
         String errorMessage = null;
-
-        // Simple validation
-        if (name == null || name.isEmpty() || email == null || email.isEmpty() || yearStr == null || yearStr.isEmpty()) {
-            errorMessage = "All fields are required!";
-        }
-
         int year = 0;
-        try {
-            year = Integer.parseInt(yearStr);
-        } catch (NumberFormatException e) {
-            errorMessage = "Year must be a number!";
+
+        // ================= VALIDATION =================
+        if (name == null || name.trim().isEmpty()
+                || email == null || email.trim().isEmpty()
+                || yearStr == null || yearStr.trim().isEmpty()) {
+
+            errorMessage = "All fields are required!";
+        } else {
+            try {
+                year = Integer.parseInt(yearStr.trim());
+            } catch (NumberFormatException e) {
+                errorMessage = "Year must be a valid number!";
+            }
         }
 
+        // ================= ERROR HANDLING =================
         if (errorMessage != null) {
             request.setAttribute("errorMessage", errorMessage);
             request.getRequestDispatcher("index.jsp").forward(request, response);
             return;
         }
 
-        Student newStudent = new Student(name, email, year);
+        // ================= BUSINESS LOGIC =================
+        Student newStudent = new Student(name.trim(), email.trim(), year);
 
         try {
             studentDAO.insertStudent(newStudent);
         } catch (SQLException e) {
             e.printStackTrace();
-            errorMessage = "Database error: " + e.getMessage();
-            request.setAttribute("errorMessage", errorMessage);
+            request.setAttribute("errorMessage", "Database error occurred!");
             request.getRequestDispatcher("index.jsp").forward(request, response);
             return;
         }
 
+        // ================= SUCCESS =================
         response.sendRedirect("show_all");
     }
 }
